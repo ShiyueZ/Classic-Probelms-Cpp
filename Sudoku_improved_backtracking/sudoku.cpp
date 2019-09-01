@@ -168,13 +168,17 @@ int main(){
     auto start=chrono::high_resolution_clock::now();
 
     Sudoku su(sudoku, nonZeros);
+    cout<<"original sudoku: "<<endl;
+    su.print();
+
 
     su.solve();
+    auto end=chrono::high_resolution_clock::now();
+    cout<<"elapsed time: "<<(end-start).count()/1e9<<" s"<<endl;
     cout<<"solution:"<<endl;
     su.print();
 
-    auto end=chrono::high_resolution_clock::now();
-    cout<<"elapsed time: "<<(end-start).count()/1e9<<" s"<<endl;
+
 
 
 }
