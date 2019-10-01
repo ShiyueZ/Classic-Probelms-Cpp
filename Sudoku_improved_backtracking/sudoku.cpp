@@ -78,16 +78,25 @@ public:
     }
 
     vector<int> prune_current(pair<int,int> weak) {
+        std::vector<bool> bool_candidates (10, true);   
         auto r=get_row(weak.first), c=get_col(weak.second), g=get_grid(weak.first, weak.second);
-        transform(begin(c), end(c), back_inserter(r), [](int e){return e;});
-        transform(begin(g), end(g), back_inserter(r), [](int e){return e;});
+        for (int i=0; i<r.size(); i++) {
+            bool_candidates[r[i]] = false;
+        }
+        for (int i=0; i<c.size(); i++) {
+            bool_candidates[c[i]] = false;
+        }
+        for (int i=0; i<g.size(); i++) {
+            bool_candidates[g[i]] = false;
+        }
+    
+        vector<int> candidates;
+        for (int i=1; i<10; i++) {
+            if (bool_candidates[i]) {
+                candidates.push_back(i);
+            }
+        }
 
-        sort(begin(r), end(r));
-        r.erase(unique(begin(r), end(r)), end(r));
-
-        vector<int> range(10), candidates;
-        iota(begin(range), end(range), 0);
-        set_difference(begin(range), end(range),begin(r), end(r), inserter(candidates, candidates.begin()));
         return candidates;
     }
 
