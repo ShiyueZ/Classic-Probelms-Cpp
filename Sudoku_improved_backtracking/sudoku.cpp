@@ -191,7 +191,7 @@ private:
 
 int main(){
 
-    ifstream iFile("sudoku.txt");
+    ifstream iFile("sudoku_hard.txt");
 
     if(!iFile)
     {
