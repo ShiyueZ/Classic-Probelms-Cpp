@@ -177,8 +177,4 @@ int main(){
     cout<<"elapsed time: "<<(end-start).count()/1e9<<" s"<<endl;
     cout<<"solution:"<<endl;
     su.print();
-
-
-
-
 }
