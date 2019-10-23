@@ -6,6 +6,7 @@
 #include<sstream>
 #include<chrono>
 #include<iterator>
+#include <numeric> 
 
 using namespace std;
 
@@ -76,6 +77,29 @@ public:
         
     }
 
+    vector<int> prune_current(pair<int,int> weak) {
+        std::vector<bool> bool_candidates (10, true);   
+        auto r=get_row(weak.first), c=get_col(weak.second), g=get_grid(weak.first, weak.second);
+        for (int i=0; i<r.size(); i++) {
+            bool_candidates[r[i]] = false;
+        }
+        for (int i=0; i<c.size(); i++) {
+            bool_candidates[c[i]] = false;
+        }
+        for (int i=0; i<g.size(); i++) {
+            bool_candidates[g[i]] = false;
+        }
+    
+        vector<int> candidates;
+        for (int i=1; i<10; i++) {
+            if (bool_candidates[i]) {
+                candidates.push_back(i);
+            }
+        }
+
+        return candidates;
+    }
+
     bool solve(){
         // copy s
         //auto s_tmp=s;
@@ -87,36 +111,69 @@ public:
         }
         //cout<<"---solving---"<<endl;
         //cout<<"weak index: "<<ind_x<<", "<<ind_y<<endl;
-        auto r=get_row(weak.first), c=get_col(weak.second), g=get_grid(weak.first, weak.second);
-        transform(begin(c), end(c), back_inserter(r), [](int e){return e;});
-        transform(begin(g), end(g), back_inserter(r), [](int e){return e;});
-
-        sort(begin(r), end(r));
-        r.erase(unique(begin(r), end(r)), end(r));
-
-        vector<int> range(10), candidates;
-        iota(begin(range), end(range), 0);
-        set_difference(begin(range), end(range),begin(r), end(r), inserter(candidates, candidates.begin()));
+        vector<int> candidates = prune_current(weak);
         
         /*cout<<"loop over "<<candidates.size()<<" candidates: ";
         for(int i=0;i<candidates.size(); i++)
             cout<<candidates[i]<<" ";
         cout<<endl;*/
 
-        if(get_weak_grid()==make_pair(-1, -1))
-            {
-            return true;}
-        else{
+        if(get_weak_grid()==make_pair(-1, -1)){
+            return true;
+        } else{
             for(int i=0;i<candidates.size(); i++){
                 //cout<<"candidate: "<<candidates[i]<<endl;
                 s[ind_x][ind_y]=candidates[i];
-                if(solve()){
+                vector<int> xs;
+                vector<int> ys;
+                bool feasible = true;
+                bool changed = true;
+                while (changed) {
+                    changed = false;
+                    if (!feasible) {
+                        break;
+                    }
+                    for(int x=0;x<9;x++) {
+                        if (!feasible) {
+                            break;
+                        }
+                        for(int y=0;y<9;y++) {
+                            if (s[x][y] == 0) {
+                                vector<int> possible = prune_current(make_pair(x,y));
+                                // no possible solution for this cell => infeasible => backtrack
+                                if (possible.size() == 0) {
+                                    s[ind_x][ind_y]=0;
+                                    feasible = false;
+                                    break;
+                                }
+                                // only a single possible solution => set it and rerun everything again
+                                if (possible.size() == 1) {
+                                    s[x][y]=possible[0];
+                                    // save for resetting later back to 0 if infeasible
+                                    xs.push_back(x);
+                                    ys.push_back(y);
+                                    changed = true;
+                                    // break into while loop
+                                    x = 9;
+                                    y = 9;
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+                if(feasible && solve()){
                     return true;
                 }
-                else
-                {
+                else {
+                    // reset current cell and all pruned cells back to 0
                     s[ind_x][ind_y]=0;
+                    for (int rev_idx=0; rev_idx<xs.size(); rev_idx++) {
+                        s[xs[rev_idx]][ys[rev_idx]] = 0;
+                    }
                 }
+               
                 
             }
         }
@@ -143,7 +200,7 @@ private:
 
 int main(){
 
-    ifstream iFile("sudoku.txt");
+    ifstream iFile("sudoku_hard.txt");
 
     if(!iFile)
     {
@@ -165,13 +222,11 @@ int main(){
         count++;
     }
 
-    auto start=chrono::high_resolution_clock::now();
-
     Sudoku su(sudoku, nonZeros);
     cout<<"original sudoku: "<<endl;
     su.print();
 
-
+    auto start=chrono::high_resolution_clock::now();
     su.solve();
     auto end=chrono::high_resolution_clock::now();
     cout<<"elapsed time: "<<(end-start).count()/1e9<<" s"<<endl;
